@@ -5,7 +5,7 @@ DATAFILE=visem
 GROUNDTRUTH1=${DATAFILE}/train
 GROUNDTRUTH2=${DATAFILE}/test
 
-OUTPUT_DIR=output_visem/exp_0610_ep50_sche
+OUTPUT_DIR=output_visem/exp_0611_ep50_sche
 
 RESULTS1=${OUTPUT_DIR}/val/tracks
 RESULTS2=${OUTPUT_DIR}/test/tracks
@@ -28,10 +28,9 @@ python3 -m torch.distributed.launch \
 --set_cost_bbox 5 \
 --set_cost_giou 4 \
 --epochs 30 \
---lr_drop 100 \
---final_weight 1.0 \
---device cuda \
---loss_schedule 
+--lr_drop 100
+#--final_weight 1.0 \
+#--loss_schedule 
 
 # --det_val true
 #--frozen_weights mot/619mot17_mot17.pth

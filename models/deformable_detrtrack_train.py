@@ -615,6 +615,8 @@ def build(args):
         num_classes = 20
     elif args.dataset_file == "coco_panoptic":
         num_classes = 250
+    elif args.dataset_file == "visem":
+        num_classes = 3
     else:
         num_classes = 20 
     device = torch.device(args.device)
