@@ -20,6 +20,7 @@ from util.misc import inverse_sigmoid
 from models.ops.modules import MSDeformAttn
 import numpy as np 
 import matplotlib.pyplot as plt
+import os
 
 
 class DeformableTransformer(nn.Module):
@@ -149,6 +150,8 @@ class DeformableTransformer(nn.Module):
         mask_flatten = []
         lvl_pos_embed_flatten = []
         spatial_shapes = []
+        src_shape_list = []
+        
         for lvl, (src, mask, pos_embed) in enumerate(zip(srcs, masks, pos_embeds)):
             """
             #print(src.shape)
@@ -159,9 +162,10 @@ class DeformableTransformer(nn.Module):
                 plt.imshow(src_sub2,cmap='jet')
                 plt.savefig('w_weightedmap.png')
             """
-            
+           
             
             bs, c, h, w = src.shape
+            src_shape_list.append([h,w])
             spatial_shape = (h, w)
             spatial_shapes.append(spatial_shape)
             src = src.flatten(2).transpose(1, 2)
@@ -180,8 +184,20 @@ class DeformableTransformer(nn.Module):
         # encoder
         if memory is None:
             memory = self.encoder(src_flatten, spatial_shapes, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
-            #print('memory = ',memory.shape)
-            #[1,17821,256]
+            memory_h,memory_w = src_shape_list[0][0],src_shape_list[0][1]
+            memory_sub = memory[:,:memory_h*memory_w,:]
+            #print(memory_sub.shape)
+            src_sub = memory_sub[0,:,:].to('cpu').detach().numpy().copy()
+            src_sub = src_sub.reshape(memory_h,memory_w,256)
+            #print(src_sub.shape)
+            src_sub = np.mean(src_sub[:,:],axis=2)
+            src_sub = self.normalize_tensor(src_sub)
+            save_path = 'w_eval_defattn_jet'
+            os.makedirs(save_path,exist_ok=True)
+            list_num = len(os.listdir(save_path))
+            plt.imshow(src_sub,cmap='jet')
+            plt.savefig(save_path +'/w_eval_encode_{}.png'.format(list_num+1))
+            
             
         # prepare input for decoder
         bs, _, c = memory.shape
