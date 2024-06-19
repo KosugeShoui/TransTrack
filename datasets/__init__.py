@@ -21,6 +21,7 @@ def get_coco_api_from_dataset(dataset):
 
 def build_dataset(image_set, args):
     if args.dataset_file == 'visem':
+        #print('visem datasets')
         return build_visem(image_set, args)
     if args.dataset_file == 'visem_sub':
         return build_visem(image_set, args)

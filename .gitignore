@@ -1,5 +1,8 @@
 # output dir
+*.png
+*.mp4
 mot
+core
 crowdhuman
 mix
 coco
@@ -10,6 +13,8 @@ inference_test_output
 output_dance
 output_visem
 output_visem
+w_input_frame/
+w_eval_mem_jet_test_38/
 visem_class1
 visem_sub
 visem

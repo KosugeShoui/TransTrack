@@ -5,7 +5,7 @@ DATAFILE=visem
 GROUNDTRUTH1=${DATAFILE}/train
 GROUNDTRUTH2=${DATAFILE}/test
 
-OUTPUT_DIR=output_visem/exp_0416_sche4to2_ep100
+OUTPUT_DIR=output_visem/exp_0604_ep50_re
 
 RESULTS1=${OUTPUT_DIR}/val/tracks
 RESULTS2=${OUTPUT_DIR}/test/tracks
@@ -25,19 +25,19 @@ python3 main_track.py  \
 --track_eval_split val \
 --with_box_refine \
 --num_queries 500
-
+"""
 #validation phase test data
 python3 main_track.py  \
 --output_dir ${OUTPUT_DIR} \
---dataset_file ${DATAFILE} \
+--dataset_file mot \
 --coco_path ${DATAFILE} \
 --batch_size 1 \
 --resume ${OUTPUT_DIR}/checkpoint.pth \
 --eval \
 --with_box_refine \
 --num_queries 500
-"""
 
+"""
 #eval phase(validation)
 python3 track_tools/eval_motchallenge.py \
 --groundtruths ${GROUNDTRUTH1} \
@@ -45,7 +45,8 @@ python3 track_tools/eval_motchallenge.py \
 --gt_type ${GT_TYPE1} \
 --eval_official \
 --score_threshold ${THRESHOLD}
-
+"""
+"""
 #eval phase(test)
 python3 track_tools/eval_motchallenge.py \
 --groundtruths ${GROUNDTRUTH2} \
@@ -56,5 +57,5 @@ python3 track_tools/eval_motchallenge.py \
 
 python3 util/print_exp.py ${OUTPUT_DIR}
 
-
+"""
 

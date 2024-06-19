@@ -179,7 +179,7 @@ class DeformableDETR(nn.Module):
         if not isinstance(samples, NestedTensor):
             samples = nested_tensor_from_tensor_list(samples)
         features, pos = self.backbone(samples)
-        print('once success')
+        #print('once success')
 
         if not isinstance(train_samples, NestedTensor):
             train_samples = nested_tensor_from_tensor_list(train_samples)

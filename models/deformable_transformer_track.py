@@ -184,19 +184,21 @@ class DeformableTransformer(nn.Module):
         # encoder
         if memory is None:
             memory = self.encoder(src_flatten, spatial_shapes, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
+            """
             memory_h,memory_w = src_shape_list[0][0],src_shape_list[0][1]
             memory_sub = memory[:,:memory_h*memory_w,:]
-            #print(memory_sub.shape)
             src_sub = memory_sub[0,:,:].to('cpu').detach().numpy().copy()
             src_sub = src_sub.reshape(memory_h,memory_w,256)
-            #print(src_sub.shape)
             src_sub = np.mean(src_sub[:,:],axis=2)
+            #print(np.max(src_sub),np.min(src_sub))
             src_sub = self.normalize_tensor(src_sub)
-            save_path = 'w_eval_defattn_jet'
+            save_path = 'w_eval_mem_jet_test_38'
             os.makedirs(save_path,exist_ok=True)
             list_num = len(os.listdir(save_path))
             plt.imshow(src_sub,cmap='jet')
             plt.savefig(save_path +'/w_eval_encode_{}.png'.format(list_num+1))
+            """
+            
             
             
         # prepare input for decoder

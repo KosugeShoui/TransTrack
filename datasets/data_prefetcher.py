@@ -4,9 +4,44 @@
 # Licensed under the Apache License, Version 2.0 [see LICENSE for details]
 # ------------------------------------------------------------------------
 import torch
+import matplotlib.pyplot as plt
+import torchvision.transforms as T
+import numpy as np
+fp16 = False
+tensor_type = torch.cuda.HalfTensor if fp16 else torch.cuda.FloatTensor
+
+def normalize_to_rgb(array):
+        array = np.asarray(array)
+        array = np.clip(array, 0, 1)
+        rgb_array = (array * 255).astype(np.uint8)
+        return rgb_array
+
+def save_img(samples,tensor_type,name):
+        samples.tensors = samples.tensors.type(tensor_type)
+        samples_sub = samples.tensors
+        unnormalize = T.Normalize(
+            mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+            std=[1 / 0.229, 1 / 0.224, 1 / 0.225])
+        
+        for i,img in enumerate(samples_sub):
+            img = unnormalize(img)
+            img = img.to('cpu').detach().numpy().copy()
+            img = normalize_to_rgb(img.transpose(1,2,0))
+            print('img_shape = ',img.shape)
+            plt.imshow(img)
+            plt.savefig(name + '_{}.png'.format(i))  
+    
 
 def to_cuda(samples, targets, device):
+    #print(type(samples),type(pre_samples))
+    #samples.tensors = samples.tensors.type(tensor_type)
+    #print(samples.tensors.shape)
+    #save_img(samples,tensor_type,'w_input_prefetch')
+   # pre_samples_sub = torch.stack(pre_samples, dim=0)
+    #print(pre_samples_sub.shape)
+    #pre_samples = pre_samples_sub
     samples = samples.to(device, non_blocking=True)
+    #pre_samples = pre_samples.to(device, non_blocking=True)
     targets = [{k: v.to(device, non_blocking=True) for k, v in t.items()} for t in targets]
     return samples, targets
 
@@ -20,11 +55,17 @@ class data_prefetcher():
             self.preload()
 
     def preload(self):
+        fp16 = False
+        tensor_type = torch.cuda.HalfTensor if fp16 else torch.cuda.FloatTensor
         try:
             self.next_samples, self.next_targets = next(self.loader)
+            #self.next_samples.tensors = self.next_samples.tensors.type(tensor_type)
+            #print(self.next_samples.tensors.shape) -->[4,3,833,1066]
+            #print(type(self.next_presamples))
         except StopIteration:
             self.next_samples = None
             self.next_targets = None
+            #self.next_presamples = None
             return
         # if record_stream() doesn't work, another option is to make sure device inputs are created
         # on the main stream.
@@ -34,6 +75,9 @@ class data_prefetcher():
         # at the time we start copying to next_*:
         # self.stream.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(self.stream):
+            #self.next_presamples = torch.Tensor(self.next_presamples)
+            #print(self.next_presamples)
+            #print(self.next_presamples.tensors.shape)
             self.next_samples, self.next_targets = to_cuda(self.next_samples, self.next_targets, self.device)
             # more code for the alternative if record_stream() doesn't work:
             # copy_ will record the use of the pinned source tensor in this side stream.
@@ -52,6 +96,7 @@ class data_prefetcher():
             torch.cuda.current_stream().wait_stream(self.stream)
             samples = self.next_samples
             targets = self.next_targets
+            #pre_samples = self.next_presamples
             if samples is not None:
                 samples.record_stream(torch.cuda.current_stream())
             if targets is not None:
@@ -66,4 +111,5 @@ class data_prefetcher():
             except StopIteration:
                 samples = None
                 targets = None
+                #pre_samples = None
         return samples, targets

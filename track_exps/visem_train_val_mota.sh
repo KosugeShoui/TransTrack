@@ -5,7 +5,7 @@ DATAFILE=visem
 GROUNDTRUTH1=${DATAFILE}/train
 GROUNDTRUTH2=${DATAFILE}/test
 
-OUTPUT_DIR=output_visem/exp_0604_ep50_re
+OUTPUT_DIR=output_visem/exp_0619_ep50_noTF
 
 RESULTS1=${OUTPUT_DIR}/val/tracks
 RESULTS2=${OUTPUT_DIR}/test/tracks
@@ -13,7 +13,7 @@ GT_TYPE1=_val_half
 GT_TYPE2=test
 THRESHOLD=-1
 
-"""
+
 #training phase
 python3 -m torch.distributed.launch \
 --nproc_per_node=1 \
@@ -21,25 +21,28 @@ python3 -m torch.distributed.launch \
 --output_dir ${OUTPUT_DIR} \
 --dataset_file ${DATAFILE} \
 --coco_path ${DATAFILE} \
---batch_size 4  \
+--batch_size 8  \
 --with_box_refine  \
 --num_queries 500 \
 --set_cost_class 2 \
 --set_cost_bbox 5 \
 --set_cost_giou 2 \
---epochs 30 \
---lr_drop 100
+--epochs 80 \
+--lr_drop 100 \
+--resume ${OUTPUT_DIR}/checkpoint.pth \
+--start_epoch 71
 #--final_weight 1.0 \
 #--loss_schedule 
 
 # --det_val true
 #--frozen_weights mot/619mot17_mot17.pth
 
-"""
+
+
 #validation phase train val data
 python3 main_track.py  \
 --output_dir ${OUTPUT_DIR} \
---dataset_file mot \
+--dataset_file ${DATAFILE} \
 --coco_path ${DATAFILE} \
 --batch_size 1 \
 --resume ${OUTPUT_DIR}/checkpoint.pth \
@@ -49,7 +52,8 @@ python3 main_track.py  \
 --num_queries 500
 #--dataset_file ${DATAFILE} \
 
-"""
+
+
 #validation phase test data
 python3 main_track.py  \
 --output_dir ${OUTPUT_DIR} \
@@ -87,4 +91,3 @@ python3 util/print_exp.py ${OUTPUT_DIR}
 python3 learning_curve.py ${OUTPUT_DIR}
 python3 learning_curve_each.py ${OUTPUT_DIR}
 python3 learning_unscaled_curve_each.py ${OUTPUT_DIR}
-"""

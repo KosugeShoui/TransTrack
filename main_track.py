@@ -124,7 +124,7 @@ def get_args_parser():
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--device', default='cuda:0',
+    parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--resume', default='', help='resume from checkpoint')
@@ -227,8 +227,8 @@ def main(args):
                 break
         return out
 
-    for n, p in model_without_ddp.named_parameters():
-        print(n)
+    #for n, p in model_without_ddp.named_parameters():
+      #  print(n)
 
     param_dicts = [
         {
@@ -380,13 +380,14 @@ def main(args):
         log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                      'epoch': epoch,
                      'n_parameters': n_parameters}
-        
+        """
         if (epoch + 1) % 15 == 0 or epoch > args.epochs - 3:
             test_stats, coco_evaluator, _ = evaluate(
                 model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir, fp16=args.fp16
             )
             log_test_stats = {**{f'test_{k}': v for k, v in test_stats.items()}}
             log_stats.update(log_test_stats)
+        """
         
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:

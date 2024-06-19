@@ -288,6 +288,7 @@ class RandomSelect(object):
         self.p = p
 
     def __call__(self, img, target):
+        #print('call')
         if random.random() < self.p:
             return self.transforms1(img, target)
         return self.transforms2(img, target)

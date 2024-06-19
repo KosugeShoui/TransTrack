@@ -16,6 +16,12 @@ from pycocotools import mask as coco_mask
 from .torchvision_datasets import CocoDetection as TvCocoDetection
 from util.misc import get_local_rank, get_local_size
 import datasets.transforms as T
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+            
 
 
 class CocoDetection(TvCocoDetection):
@@ -24,18 +30,58 @@ class CocoDetection(TvCocoDetection):
                                             cache_mode=cache_mode, local_rank=local_rank, local_size=local_size)
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks)
+        #print(img_folder)
+    
+    def normalize_to_rgb(self,array):
+        array = np.asarray(array)
+        array = np.clip(array, 0, 1)
+        rgb_array = (array * 255).astype(np.uint8)
+        
+        return rgb_array
+
+    def save_img(self,img,name):
+            #unnormalize = T.Normalize(
+             #   mean=[-0.485 / 0.229, -0.456 / 0.224, -0.406 / 0.225],
+              #  std=[1 / 0.229, 1 / 0.224, 1 / 0.225])
+            
+            #img = torch.tensor(unnormalize(img))
+            #print(img.shape)
+            img = np.array(img)
+            img = self.normalize_to_rgb(img.transpose(1,2,0))
+            #print('img_shape = ',img.shape)
+            plt.imshow(img)
+            plt.savefig(name + '.png')  
+                
 
     def __getitem__(self, idx):
         coco = self.coco
+        #print(idx) --> 300
         img_id = self.ids[idx]
+        #print(img_id) --> 730 + 300など
         ann_ids = coco.getAnnIds(imgIds=img_id)
         target = coco.loadAnns(ann_ids)
-        
-#         path = coco.loadImgs(img_id)[0]['file_name']
+    
         img_info = coco.loadImgs(img_id)[0]
         path, frame_id, video_id = img_info['file_name'], img_info['frame_id'], img_info['video_id']
-
+        
+        #print(frame_id)
+        
+        #初期フレームの場合は同じものでAttentionを取りたい
+        #if frame_id == 1:
+           # pre_img_id = img_id
+        #else:
+           # pre_img_id = img_id - 1
+        
+        #print(path)
+        
+        #過去フレーム用
+        #pre_ann_ids = coco.getAnnIds(imgIds=pre_img_id)
+        #pre_target = coco.loadAnns(pre_ann_ids)
+        #pre_img_info = coco.loadImgs(pre_img_id)[0]
+        #pre_path, pre_frame_id, pre_video_id = pre_img_info['file_name'], pre_img_info['frame_id'], pre_img_info['video_id']
+        #print(pre_path)
         img = self.get_image(path)
+        #pre_img = self.get_image(pre_path)
 #         if self.transforms is not None:
 #             img, target = self.transforms(img, target)
 
@@ -47,10 +93,22 @@ class CocoDetection(TvCocoDetection):
 #         target = {'image_id': image_id, 'frame_id': frame_id,
 #                   'video_id': video_id, 'annotations': target}
         target = {'image_id': img_id, 'frame_id': frame_id, 'video_id': video_id, 'annotations': target}
-    
-        img, target = self.prepare(img, target)
+        #pre_target = {'image_id': pre_img_id, 'frame_id': pre_frame_id, 'video_id': pre_video_id, 'annotations': pre_target}
+
+        
+        img, target = self.prepare(img,target)
+        #pre_img, pre_target = self.prepare(pre_img,pre_target)
+        
         if self._transforms is not None:
-            img, target = self._transforms(img, target)
+            #seed = np.random.randint(0,10)
+            img, target = self._transforms(img,target)
+            #pre_img, pre_target = self._transforms(pre_img,pre_target)
+    
+        #print('img shape = ',img.shape)
+        #print('pre img shape = ',pre_img.shape)
+        #print(type(img))
+        #self.save_img(img,'w_img')
+        #self.save_img(pre_img,'w_pre')
         
         return img, target
 
@@ -81,6 +139,7 @@ class ConvertCocoPolysToMask(object):
 
         image_id = target["image_id"]
         image_id = torch.tensor([image_id])
+        #print(image_id)
 
         frame_id = target["frame_id"]
         frame_id = torch.tensor([frame_id])
@@ -142,17 +201,27 @@ class ConvertCocoPolysToMask(object):
 
         target["orig_size"] = torch.as_tensor([int(h), int(w)])
         target["size"] = torch.as_tensor([int(h), int(w)])
+        
+        #print(image.shape)
 
         return image, target
+    
+def set_seed(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 def make_coco_transforms(image_set):
 
+    #set_seed(seed)
     normalize = T.Compose([
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    #scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    scales = [480]
 
     if image_set == 'train':
         return T.Compose([
@@ -160,10 +229,11 @@ def make_coco_transforms(image_set):
             T.RandomSelect(
                 T.RandomResize(scales, max_size=1333),
                 T.Compose([
-                    T.RandomResize([400, 500, 600]),
+                    T.RandomResize([600])
+                    #T.RandomResize([400, 500, 600]),
 #                     T.RandomSizeCrop(384, 600),
-                    T.RandomSizeCrop_MOT(384, 600),
-                    T.RandomResize(scales, max_size=1333),
+                    #T.RandomSizeCrop_MOT(384, 600),
+                    #T.RandomResize(scales, max_size=1333),
                 ])
             ),
             normalize,
@@ -194,30 +264,38 @@ def make_coco_transforms(image_set):
         ])
     raise ValueError(f'unknown {image_set}')
 
-    
+
     
     
 def make_mot_transforms(image_set, args):
-
+    # 通ってるのここ
+    #print('here')
+    
+    #set_seed(seed)
+    
     normalize = T.Compose([
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
+    scales = [640]
+    #scales = [480, 512, 544, 576, 608, 640, 672, 704, 736, 768, 800]
 
     if image_set == 'train' and not args.eval:
         return T.Compose([
             T.RandomHorizontalFlip(),
             T.RandomSelect(
-                T.RandomResize(scales, max_size=1333),
+                T.RandomResize(scales, max_size=640),
+                
                 T.Compose([
-                    T.RandomResize([800, 1000, 1200]),
+                    T.RandomResize([480]),
 #                     T.RandomSizeCrop(384, 600),
-                    T.RandomSizeCrop_MOT(800, 1200),
-                    T.RandomResize(scales, max_size=1333),
+                    #T.RandomSizeCrop_MOT(800, 1200),
+                    #T.RandomResize(scales, max_size=1333),
                 ])
+                
             ),
+            
             normalize,
         ])
     
@@ -237,12 +315,12 @@ def make_mot_transforms(image_set, args):
         ])
     if image_set == 'val' or args.eval:
         return T.Compose([
-            T.RandomResize([800], max_size=1333),
+            T.RandomResize([480], max_size=640),
             normalize,
         ])
     if image_set == 'test' or args.eval:
         return T.Compose([
-            T.RandomResize([800], max_size=1333),
+            T.RandomResize([480], max_size=640),
             normalize,
         ])
     raise ValueError(f'unknown {image_set}')
