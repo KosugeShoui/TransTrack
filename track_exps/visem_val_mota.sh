@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #!sh track_exps/mot_train_val_mota.sh
-DATAFILE=visem
+DATAFILE=visem_13
 
 GROUNDTRUTH1=${DATAFILE}/train
 GROUNDTRUTH2=${DATAFILE}/test
 
-OUTPUT_DIR=output_visem/exp_0604_ep50_re
+OUTPUT_DIR=output_visem/exp_0630_ep20_alldata
 
 RESULTS1=${OUTPUT_DIR}/val/tracks
 RESULTS2=${OUTPUT_DIR}/test/tracks
@@ -13,31 +13,33 @@ GT_TYPE1=_val_half
 GT_TYPE2=test
 THRESHOLD=-1
 
-"""
+
 #validation phase train val data
 python3 main_track.py  \
 --output_dir ${OUTPUT_DIR} \
 --dataset_file ${DATAFILE} \
 --coco_path ${DATAFILE} \
 --batch_size 1 \
---resume ${OUTPUT_DIR}/checkpoint.pth \
+--resume ${OUTPUT_DIR}/checkpoint0020.pth \
 --eval \
 --track_eval_split val \
 --with_box_refine \
 --num_queries 500
+
 """
 #validation phase test data
 python3 main_track.py  \
 --output_dir ${OUTPUT_DIR} \
---dataset_file mot \
+--dataset_file ${DATAFILE} \
 --coco_path ${DATAFILE} \
 --batch_size 1 \
---resume ${OUTPUT_DIR}/checkpoint.pth \
+--resume ${OUTPUT_DIR}/checkpoint0020.pth \
 --eval \
 --with_box_refine \
 --num_queries 500
 
-"""
+
+
 #eval phase(validation)
 python3 track_tools/eval_motchallenge.py \
 --groundtruths ${GROUNDTRUTH1} \
@@ -45,8 +47,7 @@ python3 track_tools/eval_motchallenge.py \
 --gt_type ${GT_TYPE1} \
 --eval_official \
 --score_threshold ${THRESHOLD}
-"""
-"""
+
 #eval phase(test)
 python3 track_tools/eval_motchallenge.py \
 --groundtruths ${GROUNDTRUTH2} \
@@ -54,8 +55,6 @@ python3 track_tools/eval_motchallenge.py \
 --gt_type ${GT_TYPE2} \
 --eval_official \
 --score_threshold ${THRESHOLD}
-
-python3 util/print_exp.py ${OUTPUT_DIR}
 
 """
 

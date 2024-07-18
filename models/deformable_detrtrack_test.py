@@ -514,7 +514,7 @@ def build(args):
     elif args.dataset_file == "visem":
         num_classes = 3
     else:
-        num_classes = 20 
+        num_classes = 3
     device = torch.device(args.device)
 
     backbone = build_backbone(args)

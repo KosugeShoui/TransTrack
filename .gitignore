@@ -19,9 +19,14 @@ visem_class1
 visem_sub
 visem
 visem_bad
+visem*
 dance
+w_eval*
+w_output*
+Results*
 val
 test
+visual*
 visual_val_predict
 visual_val_predict_dance
 visual_val_predict_visem

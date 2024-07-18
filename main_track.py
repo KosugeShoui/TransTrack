@@ -142,7 +142,7 @@ def get_args_parser():
     parser.add_argument('--track_train_split', default='train', type=str)
     #parser.add_argument('--track_eval_split', default='val', type=str)
     parser.add_argument('--track_eval_split', default='test', type=str)
-    parser.add_argument('--track_thresh', default=0.4, type=float)
+    parser.add_argument('--track_thresh', default=0.3, type=float)
     parser.add_argument('--reid_shared', default=False, type=bool)
     parser.add_argument('--reid_dim', default=128, type=int)
     parser.add_argument('--num_ids', default=360, type=int)
@@ -366,8 +366,8 @@ def main(args):
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
             # extra checkpoint before LR drop and every 5 epochs
-            if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 50 == 0:
-                checkpoint_paths.append(output_dir / f'checkpoint{epoch + 1:04}.pth')
+            if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 10 == 0:
+                checkpoint_paths.append(output_dir / f'checkpoint{epoch + 1:02}.pth')
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),

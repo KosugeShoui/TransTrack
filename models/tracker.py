@@ -39,6 +39,7 @@ class Tracker(object):
                 obj["score"] = float(scores[idx])
                 obj["bbox"] = bboxes[idx, :].cpu().numpy().tolist()
                 obj["tracking_id"] = self.id_count
+                obj['class'] = classes[idx]
 #                 obj['vxvy'] = [0.0, 0.0]
                 obj['active'] = 1
                 obj['age'] = 1
@@ -55,6 +56,8 @@ class Tracker(object):
         classes = output_results["labels"]
         bboxes = output_results["boxes"]  # x1y1x2y2
         track_bboxes = output_results["track_boxes"] if "track_boxes" in output_results else None # x1y1x2y2
+        #print(classes)
+        #print(scores)
         
         results = list()
         results_dict = dict()
@@ -66,9 +69,11 @@ class Tracker(object):
                 self.tracks_dict[idx]["bbox"] = track_bboxes[idx, :].cpu().numpy().tolist()
 
             if scores[idx] >= self.score_thresh:
+                #print(self.score_thresh)
                 obj = dict()
                 obj["score"] = float(scores[idx])
-                obj["bbox"] = bboxes[idx, :].cpu().numpy().tolist()               
+                obj["bbox"] = bboxes[idx, :].cpu().numpy().tolist()    
+                obj['class'] = classes[idx]           
                 results.append(obj)        
                 results_dict[idx] = obj
         

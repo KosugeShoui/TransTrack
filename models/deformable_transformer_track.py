@@ -21,6 +21,7 @@ from models.ops.modules import MSDeformAttn
 import numpy as np 
 import matplotlib.pyplot as plt
 import os
+import tqdm
 
 
 class DeformableTransformer(nn.Module):
@@ -156,12 +157,21 @@ class DeformableTransformer(nn.Module):
             """
             #print(src.shape)
             if lvl == 0:
-                src_sub2 = src[0,:,:,:].to('cpu').detach().numpy().copy()
-                src_sub2 = np.mean(src_sub2[:,:,:],axis=0)
-                src_sub2 = self.normalize_tensor_rev(src_sub2)
-                plt.imshow(src_sub2,cmap='jet')
-                plt.savefig('w_weightedmap.png')
+                print(src.shape)
+                for i in tqdm.tqdm(range(256)):
+                    src_sub2 = src[0,:,:,:].to('cpu').detach().numpy().copy()
+                    src_sub2 = src_sub2[i,:,:]
+                    src_sub2 = self.normalize_tensor(src_sub2)
+                    save_path = 'w_eval_src_13_channel'
+                    os.makedirs(save_path,exist_ok=True)
+                    list_num = len(os.listdir(save_path))
+                    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+                    plt.imshow(src_sub2,cmap='jet')
+                    plt.axis('tight')
+                    plt.axis('off')
+                    plt.savefig(save_path + '/w_src_{}.png'.format(list_num+1),bbox_inches='tight',pad_inches=0)
             """
+            
            
             
             bs, c, h, w = src.shape
@@ -185,19 +195,32 @@ class DeformableTransformer(nn.Module):
         if memory is None:
             memory = self.encoder(src_flatten, spatial_shapes, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
             """
-            memory_h,memory_w = src_shape_list[0][0],src_shape_list[0][1]
-            memory_sub = memory[:,:memory_h*memory_w,:]
-            src_sub = memory_sub[0,:,:].to('cpu').detach().numpy().copy()
-            src_sub = src_sub.reshape(memory_h,memory_w,256)
-            src_sub = np.mean(src_sub[:,:],axis=2)
-            #print(np.max(src_sub),np.min(src_sub))
-            src_sub = self.normalize_tensor(src_sub)
-            save_path = 'w_eval_mem_jet_test_38'
-            os.makedirs(save_path,exist_ok=True)
-            list_num = len(os.listdir(save_path))
-            plt.imshow(src_sub,cmap='jet')
-            plt.savefig(save_path +'/w_eval_encode_{}.png'.format(list_num+1))
-            """
+            for i in range(256):
+                memory_h,memory_w = src_shape_list[0][0],src_shape_list[0][1]
+                memory_sub = memory[:,:memory_h*memory_w,:]
+                src_sub = memory_sub[0,:,:].to('cpu').detach().numpy().copy()
+                src_sub = src_sub.reshape(memory_h,memory_w,256)
+       
+                src_sub = src_sub[:,:,i]
+                # max or mean
+                #src_sub = np.max(src_sub[:,:],axis=2)
+                #src_sub = src_sub[:,:,3]
+                print(i)
+                print('Memory Scale = ',np.max(src_sub),np.min(src_sub))
+                
+                src_sub = self.normalize_tensor(src_sub)
+                save_path = 'w_eval_mem_val_13_channel'
+                os.makedirs(save_path,exist_ok=True)
+                list_num = len(os.listdir(save_path))
+                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+                plt.imshow(src_sub,cmap='jet')
+                plt.axis('tight')
+                plt.axis('off')
+                plt.savefig(save_path +'/w_encode_{}.png'.format(list_num+1),bbox_inches='tight',pad_inches=0)
+                """
+            
+            
+            
             
             
             
@@ -251,6 +274,9 @@ class DeformableTransformer(nn.Module):
         if self.two_stage and self.training:
             return hs, init_reference_out, inter_references_out, enc_outputs_class, enc_outputs_coord_unact, memory
         
+        #print(hs.shape,inter_references_out.shape)
+        #print(memory.shape)
+
         return hs, init_reference_out, inter_references_out, None, None, memory
 
 

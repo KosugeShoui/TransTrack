@@ -10,8 +10,8 @@ import argparse
 def txt2img(visual_path="visual_val_gt",exp_name='',video_num=''):
     print("Starting txt2img")
 
-    valid_labels = {1}
-    ignore_labels = {2, 7, 8, 12}
+    valid_labels = {1,2,3}
+    ignore_labels = {7, 8, 12}
 
     if not os.path.exists(visual_path):
         os.makedirs(visual_path)
@@ -65,6 +65,13 @@ def txt2img(visual_path="visual_val_gt",exp_name='',video_num=''):
 
                 img_id = linelist[0]
                 obj_id = linelist[1]
+                if int(linelist[6]) == 1:
+                    class_name = 'Sperm'
+                elif int(linelist[6]) == 2:
+                    class_name = 'Cluster'
+                else:
+                    class_name = 'Pinhead'
+                    
                 bbox = [float(linelist[2]), float(linelist[3]), 
                         float(linelist[2]) + float(linelist[4]), 
                         float(linelist[3]) + float(linelist[5]), int(obj_id)]
@@ -77,8 +84,8 @@ def txt2img(visual_path="visual_val_gt",exp_name='',video_num=''):
         for img_id in sorted(txt_dict.keys()):
             img = cv2.imread(img_dict[img_id])
             for bbox in txt_dict[img_id]:
-                cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color_list[bbox[4]%79].tolist(), thickness=2)
-                cv2.putText(img, "{}".format(int(bbox[4])), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color_list[bbox[4]%79].tolist(), 2)
+                cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color_list[bbox[4]%79].tolist(), thickness=1)
+                cv2.putText(img, "{}_{}".format(int(bbox[4]),class_name), (int(bbox[0]), int(bbox[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_list[bbox[4]%79].tolist(), 1)
             os.makedirs(visual_path + "/" + show_video_name + '/tracked_images',exist_ok = True)
             cv2.imwrite(visual_path + "/" + show_video_name + '/tracked_images/' + "{:0>6d}.png".format(img_id), img)
         print(show_video_name, "Done")

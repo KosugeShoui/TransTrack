@@ -25,6 +25,14 @@ def build_dataset(image_set, args):
         return build_visem(image_set, args)
     if args.dataset_file == 'visem_sub':
         return build_visem(image_set, args)
+    if args.dataset_file == 'visem_12':
+        return build_visem(image_set, args)
+    if args.dataset_file == 'visem_22':
+        return build_visem(image_set, args)
+    if args.dataset_file == 'visem_13':
+        return build_visem(image_set, args)
+    if args.dataset_file == 'visem_24':
+        return build_visem(image_set, args)
     if args.dataset_file == 'dance':
         return build_dance(image_set, args)
     if args.dataset_file == 'coco':
